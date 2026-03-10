@@ -85,8 +85,6 @@ export const Dashboard = () => {
 
   return (
     <div className="min-h-screen space-y-6 bg-[#0B0F19] p-8 font-sans text-slate-300">
-      
-      {/* HEADER */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-4">
         <div className="flex items-center gap-4">
           <div className="flex h-8 w-8 items-center justify-center rounded border border-teal-500/50 bg-teal-500/20">
@@ -94,31 +92,30 @@ export const Dashboard = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">
-              Market Making Workstation
+              Quoting Engine - PoC
             </h1>
-            <span className="font-mono text-xs text-teal-400">Tauri Native App Connected</span>
+            <span className="font-mono text-xs text-teal-400">Connected</span>
           </div>
+        </div>
+
+        <div className="h-16 w-1/3">
+          {risk && (
+            <Alert
+              variant="destructive"
+              className="animate-in fade-in zoom-in bg-destructive/5 duration-200"
+            >
+              <ShieldAlert />
+              <AlertTitle className="font-bold">CRITICAL RISK ALERT</AlertTitle>
+              <AlertDescription>{risk.message}</AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
 
-      <div className="h-20">
-        {risk && (
-          <Alert
-            variant="destructive"
-            className="animate-in fade-in zoom-in border-red-900 bg-red-950/40 text-red-200 duration-200"
-          >
-            <ShieldAlert className="stroke-red-400" />
-            <AlertTitle className="font-bold text-red-400">{risk.level} ALERT</AlertTitle>
-            <AlertDescription>{risk.message}</AlertDescription>
-          </Alert>
-        )}
-      </div>
-
-      {/* TOP PANELS */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="col-span-2 border-slate-800 bg-[#111827]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400">Quote Streaming (SI)</CardTitle>
+        <Card className="bg-[#111827]">
+          <CardHeader>
+            <CardTitle>Quote Streaming (SI)</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-4">
             <button
@@ -132,16 +129,16 @@ export const Dashboard = () => {
               <AlertOctagon className="h-4 w-4" />
               {workerMetrics.is_paused ? "Resume Streaming" : "Halt All Quoting"}
             </button>
-            <span className={`text-xs ${workerMetrics.is_paused ? "text-amber-500" : "text-teal-400"}`}>
+            <span
+              className={`text-xs ${workerMetrics.is_paused ? "text-amber-500" : "text-teal-400"}`}
+            >
               ● {workerMetrics.is_paused ? "Paused on SI" : "Live on SI"}
             </span>
           </CardContent>
         </Card>
-
         <MetricsCard fps={fps} workerMetrics={workerMetrics} />
       </div>
 
-      {/* MAIN DATA GRID */}
       <PricesCard prices={prices} />
     </div>
   );
