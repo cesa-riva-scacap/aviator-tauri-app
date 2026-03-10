@@ -26,7 +26,7 @@ pub fn start_websocket_client(app: AppHandle, is_paused: Arc<AtomicBool>) {
     let throughput_for_emitter = Arc::clone(&latest_throughput);
 
     // THREAD A: The Native WebSocket Listener (The Firehose)
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         let ws_url = "ws://127.0.0.1:8080/ws";
         println!("Connecting to external backend at {}...", ws_url);
         
@@ -49,7 +49,7 @@ pub fn start_websocket_client(app: AppHandle, is_paused: Arc<AtomicBool>) {
                                     *state = batch; 
                                 }
                                 WsMessage::Risk(alert) => {
-                                    // CRITICAL ALERT: Bypass the throttle! Fire instantly to the UI!
+                                    println!("🚨 NATIVE RISK ALERT CAUGHT: {}", alert.message);
                                     app_for_ws.emit("RISK_UPDATE", alert).unwrap();
                                 }
                             }
@@ -59,10 +59,12 @@ pub fn start_websocket_client(app: AppHandle, is_paused: Arc<AtomicBool>) {
             }
             Err(e) => println!("Failed to connect to backend: {}", e),
         }
+    });
 
-        // THREAD B: The UI Emitter (The 30 FPS Throttle)
-        tokio::spawn(async move {
+    // THREAD B: The UI Emitter (The 30 FPS Throttle)
+        tauri::async_runtime::spawn(async move {
             let mut ticker = time::interval(Duration::from_millis(33));
+            let mut emit_counter = 0; // Keeps track of how many frames we've sent
 
             loop {
                 ticker.tick().await;
@@ -73,6 +75,18 @@ pub fn start_websocket_client(app: AppHandle, is_paused: Arc<AtomicBool>) {
                     let state = state_for_emitter.lock().await;
                     if !state.is_empty() {
                         app.emit("BATCH_UPDATE", state.clone()).unwrap();
+
+                        // --- NEW: Print a sample to the terminal once a second ---
+                        emit_counter += 1;
+                        if emit_counter % 30 == 0 {
+                            let sample = &state[0];
+                            println!(
+                                "📺 IPC BRIDGE: Emitted {} items. Sample -> {}: {:.2}", 
+                                state.len(), 
+                                sample.isin, 
+                                sample.xetra_mid
+                            );
+                        }
                     }
                 }
 
@@ -86,16 +100,15 @@ pub fn start_websocket_client(app: AppHandle, is_paused: Arc<AtomicBool>) {
         });
 
         // THREAD C: The Throughput Calculator (Runs exactly once per second)
-        tokio::spawn(async move {
+        tauri::async_runtime::spawn(async move {
             let mut interval = time::interval(Duration::from_secs(1));
             loop {
                 interval.tick().await;
                 // Swap the current count to 0, and store the old count in throughput
                 let current_count = counter_for_calc.swap(0, Ordering::Relaxed);
                 throughput_for_calc.store(current_count, Ordering::Relaxed);
+
+                println!("🚀 NATIVE THROUGHPUT: {} msgs/sec", current_count);
             }
         });
-
-        
-    });
 }
