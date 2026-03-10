@@ -1,8 +1,10 @@
+import { Dashboard } from "./features/dashboard/dashboard";
+
 function App() {
   
   return (
     <main className="min-h-screen w-full">
-      <h1>Welcome to Tauri + React</h1>
+      <Dashboard />
     </main>
   );
 }
