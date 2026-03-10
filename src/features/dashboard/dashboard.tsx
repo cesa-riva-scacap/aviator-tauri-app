@@ -48,33 +48,23 @@ export const Dashboard = () => {
 
   // --- THE NATIVE TAURI IPC BRIDGE ---
   useEffect(() => {
-    let unlistenBatch: () => void;
-    let unlistenMetrics: () => void;
-    let unlistenRisk: () => void;
+    const unlistenBatchPromise = listen<Tick[]>("BATCH_UPDATE", (event) => {
+      setPrices(event.payload);
+    });
 
-    // Tauri V2 uses Promises for event listeners, so we wrap them in an async setup function
-    const setupListeners = async () => {
-      unlistenBatch = await listen<Tick[]>("BATCH_UPDATE", (event) => {
-        setPrices(event.payload);
-      });
+    const unlistenMetricsPromise = listen<Metrics>("METRICS_UPDATE", (event) => {
+      setWorkerMetrics(event.payload);
+    });
 
-      unlistenMetrics = await listen<Metrics>("METRICS_UPDATE", (event) => {
-        setWorkerMetrics(event.payload);
-      });
+    const unlistenRiskPromise = listen<RiskAlert>("RISK_UPDATE", (event) => {
+      setRisk(event.payload);
+      setTimeout(() => setRisk(null), 2500);
+    });
 
-      unlistenRisk = await listen<RiskAlert>("RISK_UPDATE", (event) => {
-        setRisk(event.payload);
-        setTimeout(() => setRisk(null), 2500);
-      });
-    };
-
-    setupListeners();
-
-    // Clean up the native listeners when React unmounts
     return () => {
-      if (unlistenBatch) unlistenBatch();
-      if (unlistenMetrics) unlistenMetrics();
-      if (unlistenRisk) unlistenRisk();
+      unlistenBatchPromise.then((unlisten) => unlisten());
+      unlistenMetricsPromise.then((unlisten) => unlisten());
+      unlistenRiskPromise.then((unlisten) => unlisten());
     };
   }, []);
 
