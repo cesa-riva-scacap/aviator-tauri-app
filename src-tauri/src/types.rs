@@ -9,7 +9,20 @@ pub struct Tick {
     pub xetra_spr: f64,
     pub lsx_spr: f64,
     pub gettex_spr: f64,
-    pub trade_gate_spr: f64, // Matched the backend naming!
+    pub trade_gate_spr: f64,
+    pub bid_size: f64,
+    pub ask_size: f64,
+    pub vol_xetra: f64,
+    pub vol_lsx: f64,
+    pub vol_gettex: f64,
+    pub vwap: f64,
+    pub day_high: f64,
+    pub day_low: f64,
+    pub ytd_perf: f64,
+    pub moving_avg: f64,
+    pub rsi: f64,
+    pub macd: f64,
+    pub bollinger: f64,
 }
 
 // 2. The High-Priority Risk Alert
