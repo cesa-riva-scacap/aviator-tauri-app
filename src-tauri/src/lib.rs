@@ -3,7 +3,8 @@ use std::sync::Arc;
 use tauri::{Manager, State};
 
 mod types;
-mod ws;
+mod ws;        // The external WebSocket client
+mod ws_local;  // The standalone internal mock generator
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -38,8 +39,17 @@ pub fn run() {
             // Give Tauri the state so `toggle_pause` can access it later
             app.manage(AppState { is_paused });
 
-            // Start the WebSocket client in the background
-            ws::start_websocket_client(app.handle().clone(), is_paused_for_ws);
+            // ==========================================
+            // 🔄 TOGGLE ENVIRONMENT HERE
+            // ==========================================
+            
+            // OPTION A: Standalone Demo Mode (No backend required - PM ready!)
+            ws_local::start_local_mock_client(app.handle().clone(), is_paused_for_ws);
+
+            // OPTION B: Real Network Mode (Requires Axum server)
+            // ws::start_websocket_client(app.handle().clone(), is_paused_for_ws);
+
+            // ==========================================
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet, toggle_pause])
